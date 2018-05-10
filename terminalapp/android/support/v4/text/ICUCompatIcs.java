@@ -1,0 +1,62 @@
+package android.support.v4.text;
+
+import android.util.Log;
+import java.lang.reflect.Method;
+import java.util.Locale;
+
+class ICUCompatIcs {
+    private static Method sAddLikelySubtagsMethod;
+    private static Method sGetScriptMethod;
+
+    ICUCompatIcs() {
+    }
+
+    static {
+        try {
+            Class cls = Class.forName("libcore.icu.ICU");
+            if (cls != null) {
+                sGetScriptMethod = cls.getMethod("getScript", new Class[]{String.class});
+                sAddLikelySubtagsMethod = cls.getMethod("addLikelySubtags", new Class[]{String.class});
+            }
+        } catch (Throwable e) {
+            sGetScriptMethod = null;
+            sAddLikelySubtagsMethod = null;
+            Log.w("ICUCompatIcs", e);
+        }
+    }
+
+    public static String maximizeAndGetScript(Locale locale) {
+        String addLikelySubtags = addLikelySubtags(locale);
+        if (addLikelySubtags != null) {
+            return getScript(addLikelySubtags);
+        }
+        return null;
+    }
+
+    private static String getScript(String str) {
+        try {
+            if (sGetScriptMethod != null) {
+                return (String) sGetScriptMethod.invoke(null, new Object[]{str});
+            }
+        } catch (Throwable e) {
+            Log.w("ICUCompatIcs", e);
+        } catch (Throwable e2) {
+            Log.w("ICUCompatIcs", e2);
+        }
+        return null;
+    }
+
+    private static String addLikelySubtags(Locale locale) {
+        String locale2 = locale.toString();
+        try {
+            if (sAddLikelySubtagsMethod != null) {
+                return (String) sAddLikelySubtagsMethod.invoke(null, new Object[]{locale2});
+            }
+        } catch (Throwable e) {
+            Log.w("ICUCompatIcs", e);
+        } catch (Throwable e2) {
+            Log.w("ICUCompatIcs", e2);
+        }
+        return locale2;
+    }
+}
